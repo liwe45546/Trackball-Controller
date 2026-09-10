@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>轨迹球体感手柄参数配置</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07101d;
+      --panel: rgba(17, 30, 50, .95);
+      --field: rgba(8, 19, 34, .9);
+      --line: #2b4464;
+      --text: #f3f7ff;
+      --muted: #aebfd7;
+      --blue: #54aaff;
+      --cyan: #5ee4d0;
+      --green: #61dc98;
+      --yellow: #ffd166;
+      --red: #ff8585;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 5% 0%, rgba(53, 132, 255, .2), transparent 34rem),
+        radial-gradient(circle at 100% 20%, rgba(45, 225, 190, .12), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font: 18px/1.65 "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    button, input, select { font: inherit; }
+    .page { width: min(1160px, calc(100% - 32px)); margin: 30px auto 64px; }
+    .hero, .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 22px 55px rgba(0, 0, 0, .34);
+    }
+    .hero { position: relative; overflow: hidden; padding: 34px 36px; }
+    .hero::after {
+      content: "CUSTOM";
+      position: absolute;
+      right: 22px;
+      top: -34px;
+      color: rgba(115, 193, 255, .06);
+      font-size: 116px;
+      font-weight: 900;
+      letter-spacing: -.06em;
+      pointer-events: none;
+    }
+    .eyebrow { color: var(--cyan); font-size: 16px; font-weight: 800; letter-spacing: .12em; }
+    h1 { position: relative; margin: 6px 0 9px; font-size: clamp(32px, 5vw, 52px); line-height: 1.18; }
+    .hero p { position: relative; max-width: 860px; margin: 0; color: var(--muted); font-size: 19px; }
+    .connection { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 25px; }
+    button {
+      min-height: 54px;
+      border: 1px solid #405c80;
+      border-radius: 14px;
+      padding: 10px 22px;
+      color: var(--text);
+      background: #172b48;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); border-color: #7bbcff; background: #1d385e; }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    button.primary { border-color: #59b2ff; background: linear-gradient(135deg, #197dde, #1262ad); }
+    button.save { border-color: #59d7b2; background: linear-gradient(135deg, #118567, #0d6b55); }
+    button.warning { border-color: #b89342; background: #4a391d; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 16px;
+      color: var(--muted);
+      background: rgba(5, 14, 27, .65);
+      font-weight: 700;
+    }
+    .status::before { content: ""; width: 11px; height: 11px; border-radius: 50%; background: #718198; }
+    .status.ok { color: #bff5d6; border-color: rgba(97, 220, 152, .5); }
+    .status.ok::before { background: var(--green); box-shadow: 0 0 0 5px rgba(97, 220, 152, .13); }
+    .status.busy::before { background: var(--yellow); box-shadow: 0 0 0 5px rgba(255, 209, 102, .13); }
+    .status.error { color: #ffd0d0; border-color: rgba(255, 133, 133, .5); }
+    .status.error::before { background: var(--red); }
+    .tip { margin-top: 18px; border-left: 4px solid var(--blue); border-radius: 10px; padding: 12px 16px; color: #cfddf0; background: rgba(44, 113, 183, .12); font-size: 16px; }
+    .panel { margin-top: 22px; padding: 28px; }
+    .section-title { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 18px; }
+    h2 { margin: 0; font-size: 28px; line-height: 1.25; }
+    .section-title span { color: var(--muted); font-size: 15px; }
+    .grid, .key-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+    .field {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 150px;
+      gap: 14px 20px;
+      align-items: center;
+      min-height: 132px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: var(--field);
+    }
+    .field label, .key-field label { display: block; font-size: 20px; font-weight: 800; }
+    .desc { margin-top: 4px; color: var(--muted); font-size: 15px; line-height: 1.48; }
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      height: 54px;
+      border: 1px solid #405d80;
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: #fff;
+      background: #071421;
+      font-size: 20px;
+      font-weight: 800;
+      outline: none;
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(94, 228, 208, .12); }
+    .unit { margin-top: 4px; color: #82a4cc; text-align: right; font-size: 14px; }
+    .toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .toggle { display: flex; align-items: center; gap: 13px; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; background: var(--field); cursor: pointer; }
+    .toggle input { width: 23px; height: 23px; accent-color: var(--cyan); }
+    .toggle strong { display: block; font-size: 18px; }
+    .toggle small { display: block; margin-top: 2px; color: var(--muted); font-size: 14px; }
+    .master-toggle { margin-bottom: 18px; border-color: rgba(94, 228, 208, .55); background: linear-gradient(135deg, rgba(21, 113, 101, .28), rgba(13, 36, 58, .92)); }
+    .master-toggle input { width: 29px; height: 29px; }
+    .master-toggle strong { font-size: 21px; }
+    .master-toggle small { font-size: 15px; }
+    .profile-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 15px; }
+    .profile-box { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: var(--field); }
+    .profile-box label { display: block; margin-bottom: 7px; font-size: 19px; font-weight: 800; }
+    .profile-meta { min-height: 25px; margin-top: 9px; color: var(--muted); font-size: 15px; }
+    .profile-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 15px; }
+    .profile-actions button { flex: 1 1 180px; }
+    .profile-actions .danger { border-color: rgba(255, 133, 133, .55); color: #ffd4d4; background: #49262c; }
+    .device-profile-state { margin-top: 16px; border: 1px solid rgba(84, 170, 255, .35); border-radius: 14px; padding: 12px 15px; color: #cfe8ff; background: rgba(39, 103, 165, .12); font-weight: 700; }
+    .storage-note { margin-top: 14px; color: var(--muted); font-size: 15px; }
+    .fixed-note { margin-bottom: 18px; border: 1px solid rgba(94, 228, 208, .28); border-radius: 14px; padding: 13px 16px; color: #d4e7f7; background: rgba(31, 113, 109, .12); }
+    .key-field { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: center; min-height: 116px; border: 1px solid var(--line); border-radius: 17px; padding: 17px 18px; background: var(--field); }
+    .key-field select { font-size: 18px; }
+    .current-function { margin-top: 5px; color: var(--cyan); font-size: 15px; font-weight: 700; }
+    .actions { position: sticky; bottom: 14px; z-index: 3; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; border: 1px solid #365374; border-radius: 19px; padding: 14px; background: rgba(8, 19, 34, .95); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+    .actions .spacer { flex: 1; }
+    .message { min-height: 29px; margin: 18px 2px 0; color: var(--muted); font-size: 17px; }
+    .message.ok { color: #9aefbf; }
+    .message.error { color: #ffa2a2; }
+    .footnote { margin: 22px 4px 0; color: #8398b5; font-size: 15px; text-align: center; }
+    @media (max-width: 850px) {
+      .grid, .toggles, .key-grid, .profile-grid { grid-template-columns: 1fr; }
+      .hero, .panel { padding: 22px; }
+      .field { grid-template-columns: minmax(0, 1fr) 140px; }
+      .hero::after { display: none; }
+    }
+    @media (max-width: 520px) {
+      .page { width: min(100% - 18px, 1160px); margin-top: 9px; }
+      .field, .key-field { grid-template-columns: 1fr; }
+      .unit { text-align: left; }
+      .actions button { flex: 1 1 100%; }
+      .actions .spacer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">USB 参数配置</div>
+      <h1>轨迹球体感手柄 · 参数配置</h1>
+      <p>通过手柄原来的 USB 数据线调整体感开关、手感、按键功能和滚轮速度，还能为不同游戏保存并快速切换整套配置。</p>
+      <div class="connection">
+        <button id="connectButton" class="primary">连接轨迹球手柄</button>
+        <div id="connectionStatus" class="status">尚未连接</div>
+      </div>
+      <div class="tip">请使用最新版 Chrome 或 Edge。点击连接后，在系统窗口选择 <strong>STM32 Trackball Gyro Controller</strong>。</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>游戏配置</h2><span>为不同游戏保存整套体感、键位和滚轮设置</span></div>
+      <div class="profile-grid">
+        <div class="profile-box">
+          <label for="profileSelect">已保存的游戏配置</label>
+          <select id="profileSelect"><option value="">暂未选择配置</option></select>
+          <div id="profileMeta" class="profile-meta">还没有保存游戏配置。</div>
+        </div>
+        <div class="profile-box">
+          <label for="profileName">配置名称</label>
+          <input id="profileName" type="text" maxlength="30" placeholder="例如：CS2 狙击、原神日常">
+          <div class="profile-meta">名称为 1～30 个字符，并且不能和已有配置重名。</div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button id="newProfileButton" class="save">保存为新配置</button>
+        <button id="updateProfileButton" disabled>更新当前配置</button>
+        <button id="applyProfileButton" class="primary" disabled>应用到手柄</button>
+        <button id="renameProfileButton" disabled>重命名</button>
+        <button id="deleteProfileButton" class="danger" disabled>删除</button>
+      </div>
+      <div id="deviceProfileState" class="device-profile-state">尚未连接手柄，游戏配置仍可在本机保存和管理。</div>
+      <div class="storage-note">游戏配置只保存在当前电脑的这个浏览器中。清除浏览器数据会删除配置库；已经应用到手柄的最后一套设置仍会保留。</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>体感鼠标手感</h2><span>只影响体感移动，不影响轨迹球</span></div>
+      <label class="toggle master-toggle"><input id="gyroEnabled" type="checkbox" checked><span><strong>启用体感移动</strong><small>关闭后只停用陀螺仪移动，轨迹球和所有按键仍可正常使用。</small></span></label>
+      <div class="grid">
+        <div class="field"><div><label for="horizontalSensitivity">水平灵敏度</label><div class="desc">左右转动相同角度时，数值越大，鼠标移动越快。</div></div><div><input id="horizontalSensitivity" type="number" min="1" max="200" step="0.1" value="36"><div class="unit">建议 20～60</div></div></div>
+        <div class="field"><div><label for="verticalSensitivity">垂直灵敏度</label><div class="desc">上下转动相同角度时，数值越大，鼠标移动越快。</div></div><div><input id="verticalSensitivity" type="number" min="1" max="200" step="0.1" value="32"><div class="unit">建议 20～60</div></div></div>
+        <div class="field"><div><label for="feedbackRate">反馈频率</label><div class="desc">数值越高越跟手，通常保持默认值即可。</div></div><div><input id="feedbackRate" type="number" min="60" max="125" step="1" value="125"><div class="unit">每秒次数</div></div></div>
+        <div class="field"><div><label for="maxDelta">快速转动上限</label><div class="desc">快速甩动时感觉速度不够可以调大，普通使用保持默认。</div></div><div><input id="maxDelta" type="number" min="20" max="127" step="1" value="127"><div class="unit">建议 80～127</div></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>稳定与跟手</h2><span>在防抖和低延迟之间调整</span></div>
+      <div class="grid">
+        <div class="field"><div><label for="minCutoff">静止稳定程度</label><div class="desc">调小更加稳定但略慢；调大更加直接，也更容易看到手部轻微抖动。</div></div><div><input id="minCutoff" type="number" min="0.1" max="20" step="0.1" value="4"><div class="unit">建议 3～6</div></div></div>
+        <div class="field"><div><label for="filterBeta">快速跟随强度</label><div class="desc">调大后快速转动更跟手，同时也会放大快速抖动。</div></div><div><input id="filterBeta" type="number" min="0" max="2" step="0.01" value="0.24"><div class="unit">建议 0.15～0.4</div></div></div>
+        <div class="field"><div><label for="derivativeCutoff">速度判断平滑</label><div class="desc">控制系统判断转动速度时的平滑程度，通常保持默认值。</div></div><div><input id="derivativeCutoff" type="number" min="0.1" max="20" step="0.1" value="3"><div class="unit">建议保持 3</div></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>安装方向</h2><span>默认：传感器板面朝上，模块顶部朝向屏幕</span></div>
+      <div class="toggles">
+        <label class="toggle"><input id="swapAxes" type="checkbox"><span><strong>交换水平和垂直</strong><small>左右转动却变成上下移动时开启</small></span></label>
+        <label class="toggle"><input id="invertX" type="checkbox" checked><span><strong>反转左右方向</strong><small>左右移动方向相反时切换</small></span></label>
+        <label class="toggle"><input id="invertY" type="checkbox" checked><span><strong>反转上下方向</strong><small>上下移动方向相反时切换</small></span></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>按键功能</h2><span>按实体按键原来的名称查找</span></div>
+      <div class="fixed-note">鼠标左右键、DPI 调节、W/A/S/D 和轨迹球保持固定；体感移动可以在上方单独开启或关闭。</div>
+      <div id="keyGrid" class="key-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title"><h2>滚轮速度</h2><span>上滚和下滚使用相同格数</span></div>
+      <div class="grid">
+        <div class="field"><div><label for="scrollSteps">每次滚动格数</label><div class="desc">按一下上滚键或下滚键时滚动多少格。数值越大，页面滚动距离越远；长按不会连续滚动。</div></div><div><input id="scrollSteps" type="number" min="1" max="30" step="1" value="6"><div class="unit">格 / 次</div></div></div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button id="reloadButton" disabled>读取当前设置</button>
+      <button id="defaultButton" class="warning" disabled>恢复出厂默认</button>
+      <span class="spacer"></span>
+      <button id="saveButton" class="save" disabled>保存并应用</button>
+    </div>
+    <div id="message" class="message">请先连接轨迹球手柄。网页只在本机运行，不会上传数据。</div>
+    <div class="footnote">设置通过 USB 数据线直接保存在手柄中，不需要安装额外驱动程序。</div>
+  </main>
+
+  <script>
+    "use strict";
+
+    const USB_VENDOR_ID = 0x0483;
+    const USB_PRODUCT_ID = 0x572C;
+    const VENDOR_USAGE_PAGE = 0xFF00;
+    const VENDOR_USAGE = 0x01;
+    const REPORT_ID = 3;
+    const REPORT_SIZE = 32;
+    const SETTINGS_SIZE = 29;
+    const PENDING_STATUS = 0xFE;
+    const PROFILE_STORAGE_KEY = "stm32-trackball-gyro.profiles.v1";
+    const PROFILE_LIBRARY_VERSION = 1;
+    const PROFILE_NAME_MAX_LENGTH = 30;
+    const COMMAND = Object.freeze({
+      GET_CURRENT: 0x01,
+      GET_DEFAULTS: 0x02,
+      SAVE_SETTINGS: 0x03,
+      RESTORE_DEFAULTS: 0x04,
+    });
+    const STATUS_TEXT = Object.freeze({
+      1: "部分设置超出允许范围，请检查后重试",
+      2: "保存失败，请重新连接手柄后再试",
+      3: "当前手柄程序与此网页不匹配",
+      0xFD: "手柄正在处理上一次操作，请稍后再试",
+    });
+
+    const keyDefinitions = [
+      { name: "原 Ctrl 键", hint: "手柄上原来标有 Ctrl 的按键" },
+      { name: "原 Shift 键", hint: "手柄上原来标有 Shift 的按键" },
+      { name: "原 Esc 键", hint: "手柄上原来标有 Esc 的按键" },
+      { name: "原 Tab 键", hint: "手柄上原来标有 Tab 的按键" },
+      { name: "原 Enter 键", hint: "手柄上原来标有 Enter 的按键" },
+      { name: "原 Space 键", hint: "手柄上原来标有 Space 的按键" },
+      { name: "原数字 1 键", hint: "手柄上原来标有数字 1 的按键" },
+      { name: "原数字 3 键", hint: "手柄上原来标有数字 3 的按键" },
+      { name: "原 Q 键", hint: "手柄上原来标有 Q 的按键" },
+      { name: "原 E 键", hint: "手柄上原来标有 E 的按键" },
+      { name: "原 R 键", hint: "手柄上原来标有 R 的按键" },
+      { name: "原 F 键", hint: "手柄上原来标有 F 的按键" },
+      { name: "原 C 键", hint: "手柄上原来标有 C 的按键" },
+      { name: "原 V 键", hint: "手柄上原来标有 V 的按键" },
+    ];
+    const defaultKeyBindings = [0xE0, 0xE1, 0x29, 0x2B, 0x28, 0x2C, 0x1E, 0x20, 0x14, 0x08, 0x15, 0x09, 0x06, 0x19];
+    const keyOptionGroups = [
+      { label: "开关", options: [[0x00, "不使用此按键"]] },
+      { label: "字母", options: Array.from({ length: 26 }, function (_, index) { return [0x04 + index, String.fromCharCode(65 + index)]; }) },
+      { label: "数字", options: [
+        [0x1E, "数字 1"], [0x1F, "数字 2"], [0x20, "数字 3"], [0x21, "数字 4"], [0x22, "数字 5"],
+        [0x23, "数字 6"], [0x24, "数字 7"], [0x25, "数字 8"], [0x26, "数字 9"], [0x27, "数字 0"],
+      ] },
+      { label: "常用功能", options: [
+        [0x28, "Enter 回车"], [0x29, "Esc 退出"], [0x2A, "Backspace 退格"], [0x2B, "Tab 切换"],
+        [0x2C, "Space 空格"], [0x39, "Caps Lock 大小写锁定"], [0x46, "Print Screen 截屏"],
+        [0x47, "Scroll Lock"], [0x48, "Pause"], [0x65, "菜单键"], [0x66, "电源键"],
+      ] },
+      { label: "方向与编辑", options: [
+        [0x49, "Insert 插入"], [0x4A, "Home 行首"], [0x4B, "Page Up 上一页"], [0x4C, "Delete 删除"],
+        [0x4D, "End 行尾"], [0x4E, "Page Down 下一页"], [0x4F, "方向键 →"], [0x50, "方向键 ←"],
+        [0x51, "方向键 ↓"], [0x52, "方向键 ↑"],
+      ] },
+      { label: "符号", options: [
+        [0x2D, "- 减号"], [0x2E, "= 等号"], [0x2F, "[ 左方括号"], [0x30, "] 右方括号"],
+        [0x31, "\\ 反斜杠"], [0x32, "# 井号"], [0x33, "; 分号"], [0x34, "' 单引号"], [0x35, "反引号/波浪号键"],
+        [0x36, ", 逗号"], [0x37, ". 句号"], [0x38, "/ 斜杠"],
+      ] },
+      { label: "功能键", options: Array.from({ length: 24 }, function (_, index) {
+        return [index < 12 ? 0x3A + index : 0x68 + index - 12, "F" + (index + 1)];
+      }) },
+      { label: "小键盘", options: [
+        [0x53, "小键盘 Num Lock"], [0x54, "小键盘 /"], [0x55, "小键盘 *"], [0x56, "小键盘 -"],
+        [0x57, "小键盘 +"], [0x58, "小键盘 Enter"], [0x59, "小键盘 1"], [0x5A, "小键盘 2"],
+        [0x5B, "小键盘 3"], [0x5C, "小键盘 4"], [0x5D, "小键盘 5"], [0x5E, "小键盘 6"],
+        [0x5F, "小键盘 7"], [0x60, "小键盘 8"], [0x61, "小键盘 9"], [0x62, "小键盘 0"],
+        [0x63, "小键盘小数点"], [0x64, "额外反斜杠键"], [0x67, "小键盘等号"],
+      ] },
+      { label: "组合辅助键", options: [
+        [0xE0, "左 Ctrl"], [0xE1, "左 Shift"], [0xE2, "左 Alt"], [0xE3, "左 Windows"],
+        [0xE4, "右 Ctrl"], [0xE5, "右 Shift"], [0xE6, "右 Alt"], [0xE7, "右 Windows"],
+      ] },
+    ];
+
+    const defaultValues = Object.freeze({
+      gyroEnabled: true,
+      horizontalSensitivity: 36,
+      verticalSensitivity: 32,
+      minCutoff: 4,
+      filterBeta: 0.24,
+      derivativeCutoff: 3,
+      feedbackRate: 125,
+      maxDelta: 127,
+      swapAxes: false,
+      invertX: true,
+      invertY: true,
+      keyBindings: defaultKeyBindings.slice(),
+      scrollSteps: 6,
+    });
+    const numericFieldIds = [
+      "horizontalSensitivity", "verticalSensitivity", "feedbackRate",
+      "maxDelta", "minCutoff", "filterBeta", "derivativeCutoff", "scrollSteps",
+    ];
+
+    const $ = function (selector) { return document.querySelector(selector); };
+    const keyNameByCode = new Map();
+    keyOptionGroups.forEach(function (group) {
+      group.options.forEach(function (item) { keyNameByCode.set(item[0], item[1]); });
+    });
+
+    function makeKeySelector(index) {
+      const card = document.createElement("div");
+      card.className = "key-field";
+      const info = document.createElement("div");
+      const label = document.createElement("label");
+      label.htmlFor = "keyBinding" + index;
+      label.textContent = keyDefinitions[index].name;
+      const hint = document.createElement("div");
+      hint.className = "desc";
+      hint.textContent = keyDefinitions[index].hint + "，可选择按下后电脑收到的按键。";
+      const current = document.createElement("div");
+      current.className = "current-function";
+      current.id = "keyCurrent" + index;
+      info.appendChild(label);
+      info.appendChild(hint);
+      info.appendChild(current);
+
+      const select = document.createElement("select");
+      select.id = "keyBinding" + index;
+      keyOptionGroups.forEach(function (group) {
+        const optionGroup = document.createElement("optgroup");
+        optionGroup.label = group.label;
+        group.options.forEach(function (item) {
+          const option = document.createElement("option");
+          option.value = String(item[0]);
+          option.textContent = item[1];
+          optionGroup.appendChild(option);
+        });
+        select.appendChild(optionGroup);
+      });
+      select.addEventListener("change", function () { updateCurrentKeyName(index); });
+      card.appendChild(info);
+      card.appendChild(select);
+      return card;
+    }
+
+    function updateCurrentKeyName(index) {
+      const code = Number($("#keyBinding" + index).value);
+      $("#keyCurrent" + index).textContent = "当前功能：" + (keyNameByCode.get(code) || "未知");
+    }
+
+    keyDefinitions.forEach(function (_, index) {
+      $("#keyGrid").appendChild(makeKeySelector(index));
+    });
+
+    const connectButton = $("#connectButton");
+    const reloadButton = $("#reloadButton");
+    const defaultButton = $("#defaultButton");
+    const saveButton = $("#saveButton");
+    const profileSelect = $("#profileSelect");
+    const profileName = $("#profileName");
+    const newProfileButton = $("#newProfileButton");
+    const updateProfileButton = $("#updateProfileButton");
+    const applyProfileButton = $("#applyProfileButton");
+    const renameProfileButton = $("#renameProfileButton");
+    const deleteProfileButton = $("#deleteProfileButton");
+    const profileMeta = $("#profileMeta");
+    const deviceProfileState = $("#deviceProfileState");
+    const connectionStatus = $("#connectionStatus");
+    const message = $("#message");
+    let device = null;
+    let commandRunning = false;
+    let profiles = [];
+    let selectedProfileId = "";
+    let currentDeviceSettings = null;
+
+    function sleep(milliseconds) { return new Promise(function (resolve) { setTimeout(resolve, milliseconds); }); }
+    function setMessage(text, type) { message.textContent = text; message.className = ("message " + (type || "")).trim(); }
+    function setConnectionState(state, text) {
+      connectionStatus.textContent = text;
+      connectionStatus.className = ("status " + (state || "")).trim();
+      const connected = Boolean(device && device.opened);
+      reloadButton.disabled = !connected || commandRunning;
+      defaultButton.disabled = !connected || commandRunning;
+      saveButton.disabled = !connected || commandRunning;
+      connectButton.disabled = commandRunning;
+      connectButton.textContent = connected ? "已连接轨迹球手柄" : "连接轨迹球手柄";
+      updateProfileButtons();
+    }
+    function fillForm(settings) {
+      numericFieldIds.forEach(function (id) { $("#" + id).value = settings[id]; });
+      $("#gyroEnabled").checked = settings.gyroEnabled;
+      $("#swapAxes").checked = settings.swapAxes;
+      $("#invertX").checked = settings.invertX;
+      $("#invertY").checked = settings.invertY;
+      settings.keyBindings.forEach(function (code, index) {
+        $("#keyBinding" + index).value = String(code);
+        updateCurrentKeyName(index);
+      });
+    }
+    function readNumber(id) {
+      const input = $("#" + id);
+      if (!input.reportValidity()) {
+        throw new Error("请检查“" + input.closest(".field").querySelector("label").textContent + "”的数值范围");
+      }
+      const value = Number(input.value);
+      if (!Number.isFinite(value)) throw new Error("存在无效数字，请检查后重试");
+      return value;
+    }
+    function readForm() {
+      return {
+        gyroEnabled: $("#gyroEnabled").checked,
+        horizontalSensitivity: readNumber("horizontalSensitivity"),
+        verticalSensitivity: readNumber("verticalSensitivity"),
+        feedbackRate: Math.round(readNumber("feedbackRate")),
+        maxDelta: Math.round(readNumber("maxDelta")),
+        minCutoff: readNumber("minCutoff"),
+        filterBeta: readNumber("filterBeta"),
+        derivativeCutoff: readNumber("derivativeCutoff"),
+        swapAxes: $("#swapAxes").checked,
+        invertX: $("#invertX").checked,
+        invertY: $("#invertY").checked,
+        keyBindings: keyDefinitions.map(function (_, index) { return Number($("#keyBinding" + index).value); }),
+        scrollSteps: Math.round(readNumber("scrollSteps")),
+      };
+    }
+    function encodeSettings(settings) {
+      const bytes = new Uint8Array(SETTINGS_SIZE);
+      const view = new DataView(bytes.buffer);
+      let flags = 0;
+      if (settings.swapAxes) flags |= 0x01;
+      if (settings.invertX) flags |= 0x02;
+      if (settings.invertY) flags |= 0x04;
+      if (!settings.gyroEnabled) flags |= 0x08;
+      view.setUint8(0, 2);
+      view.setUint8(1, flags);
+      view.setUint16(2, Math.round(settings.horizontalSensitivity * 100), true);
+      view.setUint16(4, Math.round(settings.verticalSensitivity * 100), true);
+      view.setUint16(6, Math.round(settings.minCutoff * 100), true);
+      view.setUint16(8, Math.round(settings.filterBeta * 1000), true);
+      view.setUint16(10, Math.round(settings.derivativeCutoff * 100), true);
+      view.setUint8(12, settings.feedbackRate);
+      view.setUint8(13, settings.maxDelta);
+      settings.keyBindings.forEach(function (code, index) { view.setUint8(14 + index, code); });
+      view.setUint8(28, settings.scrollSteps);
+      return bytes;
+    }
+    function decodeSettings(bytes, offset) {
+      if (bytes.byteLength < offset + SETTINGS_SIZE) throw new Error("手柄返回的数据不完整，请重新连接后再试");
+      const view = new DataView(bytes.buffer, bytes.byteOffset + offset, SETTINGS_SIZE);
+      if (view.getUint8(0) !== 2) throw new Error("网页与手柄程序版本不匹配，请使用随新版程序提供的配置网页");
+      const flags = view.getUint8(1);
+      const keyBindings = [];
+      for (let index = 0; index < keyDefinitions.length; index += 1) keyBindings.push(view.getUint8(14 + index));
+      return {
+        gyroEnabled: (flags & 0x08) === 0,
+        horizontalSensitivity: view.getUint16(2, true) / 100,
+        verticalSensitivity: view.getUint16(4, true) / 100,
+        minCutoff: view.getUint16(6, true) / 100,
+        filterBeta: view.getUint16(8, true) / 1000,
+        derivativeCutoff: view.getUint16(10, true) / 100,
+        feedbackRate: view.getUint8(12),
+        maxDelta: view.getUint8(13),
+        swapAxes: (flags & 0x01) !== 0,
+        invertX: (flags & 0x02) !== 0,
+        invertY: (flags & 0x04) !== 0,
+        keyBindings: keyBindings,
+        scrollSteps: view.getUint8(28),
+      };
+    }
+    function canonicalizeSettings(settings) {
+      if (!settings || typeof settings !== "object") throw new Error("配置内容无效");
+      const normalized = {
+        gyroEnabled: settings.gyroEnabled === undefined ? true : settings.gyroEnabled,
+        horizontalSensitivity: Number(settings.horizontalSensitivity),
+        verticalSensitivity: Number(settings.verticalSensitivity),
+        minCutoff: Number(settings.minCutoff),
+        filterBeta: Number(settings.filterBeta),
+        derivativeCutoff: Number(settings.derivativeCutoff),
+        feedbackRate: Math.round(Number(settings.feedbackRate)),
+        maxDelta: Math.round(Number(settings.maxDelta)),
+        swapAxes: settings.swapAxes,
+        invertX: settings.invertX,
+        invertY: settings.invertY,
+        keyBindings: Array.isArray(settings.keyBindings) ? settings.keyBindings.map(Number) : null,
+        scrollSteps: Math.round(Number(settings.scrollSteps)),
+      };
+      const booleans = [normalized.gyroEnabled, normalized.swapAxes, normalized.invertX, normalized.invertY];
+      if (booleans.some(function (value) { return typeof value !== "boolean"; })) throw new Error("配置中的开关状态无效");
+      const inRange = function (value, low, high) { return Number.isFinite(value) && value >= low && value <= high; };
+      if (!inRange(normalized.horizontalSensitivity, 1, 200) ||
+          !inRange(normalized.verticalSensitivity, 1, 200) ||
+          !inRange(normalized.minCutoff, 0.1, 20) ||
+          !inRange(normalized.filterBeta, 0, 2) ||
+          !inRange(normalized.derivativeCutoff, 0.1, 20) ||
+          !inRange(normalized.feedbackRate, 60, 125) ||
+          !inRange(normalized.maxDelta, 20, 127) ||
+          !inRange(normalized.scrollSteps, 1, 30)) {
+        throw new Error("配置中的数值超出允许范围");
+      }
+      if (!normalized.keyBindings || normalized.keyBindings.length !== keyDefinitions.length ||
+          normalized.keyBindings.some(function (code) { return !Number.isInteger(code) || !keyNameByCode.has(code); })) {
+        throw new Error("配置中的按键功能无效");
+      }
+      /* Encode and decode once so stored profiles use exactly the same
+         precision and integer rounding as the controller wire format. */
+      return decodeSettings(encodeSettings(normalized), 0);
+    }
+    function settingsSignature(settings) {
+      return Array.from(encodeSettings(canonicalizeSettings(settings))).join(",");
+    }
+    function createProfileId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+      return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+    }
+    function normalizedProfileName(excludedId) {
+      const name = profileName.value.trim();
+      if (!name || Array.from(name).length > PROFILE_NAME_MAX_LENGTH) {
+        throw new Error("配置名称需要填写 1～30 个字符");
+      }
+      const duplicated = profiles.some(function (profile) {
+        return profile.id !== excludedId && profile.name.localeCompare(name, "zh-CN", { sensitivity: "base" }) === 0;
+      });
+      if (duplicated) throw new Error("已经存在同名配置，请换一个名称");
+      profileName.value = name;
+      return name;
+    }
+    function loadProfileLibrary() {
+      try {
+        const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (!stored) {
+          profiles = [];
+          return "";
+        }
+        const library = JSON.parse(stored);
+        if (!library || library.version !== PROFILE_LIBRARY_VERSION || !Array.isArray(library.profiles)) {
+          throw new Error("配置库版本无效");
+        }
+        const seenIds = new Set();
+        const seenNames = new Set();
+        profiles = library.profiles.map(function (profile) {
+          if (!profile || typeof profile.id !== "string" || !profile.id || seenIds.has(profile.id)) throw new Error("配置编号无效");
+          const name = typeof profile.name === "string" ? profile.name.trim() : "";
+          const nameKey = name.toLocaleLowerCase("zh-CN");
+          if (!name || Array.from(name).length > PROFILE_NAME_MAX_LENGTH || seenNames.has(nameKey)) throw new Error("配置名称无效");
+          const updatedAt = Number(profile.updatedAt);
+          if (!Number.isFinite(updatedAt) || updatedAt <= 0) throw new Error("配置时间无效");
+          seenIds.add(profile.id);
+          seenNames.add(nameKey);
+          return { id: profile.id, name: name, updatedAt: updatedAt, settings: canonicalizeSettings(profile.settings) };
+        }).sort(function (left, right) { return right.updatedAt - left.updatedAt; });
+        return "";
+      } catch (error) {
+        profiles = [];
+        try { localStorage.removeItem(PROFILE_STORAGE_KEY); } catch (_) {}
+        return "浏览器中的游戏配置库已损坏，已安全重置为空；手柄内的设置没有受到影响。";
+      }
+    }
+    function commitProfileLibrary(nextProfiles, nextSelectedId) {
+      const sorted = nextProfiles.slice().sort(function (left, right) { return right.updatedAt - left.updatedAt; });
+      try {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({
+          version: PROFILE_LIBRARY_VERSION,
+          profiles: sorted,
+        }));
+      } catch (error) {
+        throw new Error("浏览器不允许保存游戏配置，请检查隐私模式或浏览器存储设置");
+      }
+      profiles = sorted;
+      selectedProfileId = nextSelectedId || "";
+      renderProfiles();
+    }
+    function selectedProfile() {
+      return profiles.find(function (profile) { return profile.id === selectedProfileId; }) || null;
+    }
+    function formatProfileTime(timestamp) {
+      return new Date(timestamp).toLocaleString("zh-CN", {
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+      });
+    }
+    function updateProfileButtons() {
+      const hasSelection = Boolean(selectedProfile());
+      const connected = Boolean(device && device.opened);
+      newProfileButton.disabled = commandRunning;
+      updateProfileButton.disabled = commandRunning || !hasSelection;
+      renameProfileButton.disabled = commandRunning || !hasSelection;
+      deleteProfileButton.disabled = commandRunning || !hasSelection;
+      applyProfileButton.disabled = commandRunning || !hasSelection || !connected;
+    }
+    function updateDeviceProfileState() {
+      if (!device || !device.opened || !currentDeviceSettings) {
+        deviceProfileState.textContent = "尚未连接手柄，游戏配置仍可在本机保存和管理。";
+        return;
+      }
+      const signature = settingsSignature(currentDeviceSettings);
+      let match = selectedProfile();
+      if (!match || settingsSignature(match.settings) !== signature) {
+        match = profiles.find(function (profile) { return settingsSignature(profile.settings) === signature; }) || null;
+      }
+      deviceProfileState.textContent = match
+        ? "手柄当前正在使用：“" + match.name + "”。"
+        : "手柄当前设置尚未保存为游戏配置。";
+    }
+    function renderProfiles() {
+      const active = selectedProfile();
+      profileSelect.textContent = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = profiles.length ? "请选择一个游戏配置" : "还没有保存游戏配置";
+      profileSelect.appendChild(placeholder);
+      profiles.forEach(function (profile) {
+        const option = document.createElement("option");
+        option.value = profile.id;
+        option.textContent = profile.name + " · " + formatProfileTime(profile.updatedAt);
+        profileSelect.appendChild(option);
+      });
+      profileSelect.value = active ? active.id : "";
+      if (active) {
+        profileName.value = active.name;
+        profileMeta.textContent = "最后修改：" + formatProfileTime(active.updatedAt);
+      } else {
+        profileMeta.textContent = profiles.length ? "选择一套配置后可以应用、更新、改名或删除。" : "还没有保存游戏配置。";
+      }
+      updateProfileButtons();
+      updateDeviceProfileState();
+    }
+    function normalizeFeatureData(data) {
+      let bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+      if (bytes.length === REPORT_SIZE + 1 && bytes[0] === REPORT_ID) bytes = bytes.slice(1);
+      return bytes;
+    }
+    async function sendCommand(command, settingsPayload) {
+      if (!device || !device.opened) throw new Error("轨迹球手柄尚未连接");
+      const packet = new Uint8Array(REPORT_SIZE);
+      packet[0] = command;
+      if (settingsPayload) packet.set(settingsPayload, 1);
+      await device.sendFeatureReport(REPORT_ID, packet);
+      const deadline = performance.now() + 3000;
+      while (performance.now() < deadline) {
+        await sleep(30);
+        const bytes = normalizeFeatureData(await device.receiveFeatureReport(REPORT_ID));
+        if (bytes.length < 2 || bytes[0] !== (command | 0x80)) continue;
+        if (bytes[1] === PENDING_STATUS) continue;
+        if (bytes[1] !== 0) throw new Error(STATUS_TEXT[bytes[1]] || ("手柄返回错误码 " + bytes[1]));
+        return decodeSettings(bytes, 2);
+      }
+      throw new Error("等待手柄回应超时，请重新插拔 USB 后再试");
+    }
+    async function readCurrentSettings(showSuccess) {
+      const settings = await sendCommand(COMMAND.GET_CURRENT);
+      fillForm(settings);
+      currentDeviceSettings = canonicalizeSettings(settings);
+      updateDeviceProfileState();
+      if (showSuccess !== false) setMessage("已从手柄读取当前设置。", "ok");
+    }
+    async function connectDevice() {
+      if (!("hid" in navigator)) throw new Error("当前浏览器不支持连接手柄，请改用最新版 Chrome 或 Edge");
+      const devices = await navigator.hid.requestDevice({ filters: [{
+        vendorId: USB_VENDOR_ID,
+        productId: USB_PRODUCT_ID,
+        usagePage: VENDOR_USAGE_PAGE,
+        usage: VENDOR_USAGE,
+      }] });
+      if (!devices.length) throw new Error("没有选择手柄");
+      if (device && device.opened) await device.close();
+      device = devices[0];
+      if (!device.opened) await device.open();
+      await readCurrentSettings(false);
+      setMessage("连接成功，已经载入手柄当前保存的全部设置。", "ok");
+    }
+    async function runAction(action, busyText) {
+      if (commandRunning) return;
+      commandRunning = true;
+      setConnectionState("busy", busyText);
+      try {
+        await action();
+        setConnectionState("ok", "已通过 USB 连接");
+      } catch (error) {
+        setMessage(error.message || String(error), "error");
+        setConnectionState(device && device.opened ? "ok" : "error", device && device.opened ? "已连接，但操作失败" : "连接已断开");
+      } finally {
+        commandRunning = false;
+        setConnectionState(device && device.opened ? "ok" : "", device && device.opened ? "已通过 USB 连接" : "尚未连接");
+      }
+    }
+
+    connectButton.addEventListener("click", function () {
+      runAction(connectDevice, "正在连接…");
+    });
+    reloadButton.addEventListener("click", function () {
+      runAction(function () { return readCurrentSettings(); }, "正在读取…");
+    });
+    saveButton.addEventListener("click", function () {
+      runAction(async function () {
+        const stored = await sendCommand(COMMAND.SAVE_SETTINGS, encodeSettings(readForm()));
+        fillForm(stored);
+        currentDeviceSettings = canonicalizeSettings(stored);
+        updateDeviceProfileState();
+        setMessage("体感开关、手感、按键和滚轮设置已生效并保存，断电后不会丢失。", "ok");
+      }, "正在保存…");
+    });
+    defaultButton.addEventListener("click", function () {
+      const accepted = window.confirm(
+        "确定恢复出厂默认吗？\n\n这会重新开启体感，并恢复默认手感、14 个按键的原始功能，以及每次滚动 6 格。\n已保存的游戏配置和传感器校准会保留。"
+      );
+      if (!accepted) return;
+      runAction(async function () {
+        const restored = await sendCommand(COMMAND.RESTORE_DEFAULTS);
+        fillForm(restored);
+        currentDeviceSettings = canonicalizeSettings(restored);
+        updateDeviceProfileState();
+        setMessage("已恢复并保存出厂默认设置，游戏配置和传感器校准仍被保留。", "ok");
+      }, "正在恢复默认值…");
+    });
+
+    profileSelect.addEventListener("change", function () {
+      selectedProfileId = profileSelect.value;
+      const profile = selectedProfile();
+      renderProfiles();
+      if (profile) {
+        fillForm(profile.settings);
+        setMessage("已将“" + profile.name + "”载入页面；点击“应用到手柄”后才会写入设备。", "ok");
+      } else {
+        profileName.value = "";
+      }
+    });
+    newProfileButton.addEventListener("click", function () {
+      try {
+        const profile = {
+          id: createProfileId(),
+          name: normalizedProfileName(""),
+          updatedAt: Date.now(),
+          settings: canonicalizeSettings(readForm()),
+        };
+        commitProfileLibrary(profiles.concat([profile]), profile.id);
+        setMessage("已在本机保存新游戏配置：“" + profile.name + "”。", "ok");
+      } catch (error) {
+        setMessage(error.message || String(error), "error");
+      }
+    });
+    updateProfileButton.addEventListener("click", function () {
+      const profile = selectedProfile();
+      if (!profile) return;
+      if (!window.confirm("确定用页面当前参数覆盖“" + profile.name + "”吗？")) return;
+      try {
+        const updated = {
+          id: profile.id,
+          name: profile.name,
+          updatedAt: Date.now(),
+          settings: canonicalizeSettings(readForm()),
+        };
+        commitProfileLibrary(profiles.map(function (item) { return item.id === updated.id ? updated : item; }), updated.id);
+        setMessage("已更新本机游戏配置：“" + updated.name + "”。", "ok");
+      } catch (error) {
+        setMessage(error.message || String(error), "error");
+      }
+    });
+    renameProfileButton.addEventListener("click", function () {
+      const profile = selectedProfile();
+      if (!profile) return;
+      try {
+        const nextName = normalizedProfileName(profile.id);
+        const renamed = {
+          id: profile.id,
+          name: nextName,
+          updatedAt: Date.now(),
+          settings: profile.settings,
+        };
+        commitProfileLibrary(profiles.map(function (item) { return item.id === renamed.id ? renamed : item; }), renamed.id);
+        setMessage("游戏配置已重命名为：“" + nextName + "”。", "ok");
+      } catch (error) {
+        setMessage(error.message || String(error), "error");
+      }
+    });
+    deleteProfileButton.addEventListener("click", function () {
+      const profile = selectedProfile();
+      if (!profile || !window.confirm("确定删除本机游戏配置“" + profile.name + "”吗？\n\n这不会改变手柄当前正在使用的设置。")) return;
+      try {
+        commitProfileLibrary(profiles.filter(function (item) { return item.id !== profile.id; }), "");
+        profileName.value = "";
+        setMessage("已删除本机游戏配置：“" + profile.name + "”。手柄当前设置没有改变。", "ok");
+      } catch (error) {
+        setMessage(error.message || String(error), "error");
+      }
+    });
+    applyProfileButton.addEventListener("click", function () {
+      const profile = selectedProfile();
+      if (!profile) return;
+      runAction(async function () {
+        fillForm(profile.settings);
+        const stored = await sendCommand(COMMAND.SAVE_SETTINGS, encodeSettings(profile.settings));
+        fillForm(stored);
+        currentDeviceSettings = canonicalizeSettings(stored);
+        updateDeviceProfileState();
+        setMessage("已将“" + profile.name + "”应用并保存到手柄，断电后仍会保留。", "ok");
+      }, "正在应用配置…");
+    });
+
+    if ("hid" in navigator) {
+      navigator.hid.addEventListener("disconnect", function (event) {
+        if (event.device !== device) return;
+        device = null;
+        currentDeviceSettings = null;
+        commandRunning = false;
+        setConnectionState("error", "USB 已断开");
+        updateDeviceProfileState();
+        setMessage("USB 连接已断开，请重新连接。", "error");
+      });
+    } else {
+      setConnectionState("error", "浏览器不支持连接手柄");
+      connectButton.disabled = true;
+      setMessage("请使用最新版 Chrome 或 Edge，并通过配套的启动文件打开本页。", "error");
+    }
+    fillForm(defaultValues);
+    const profileLoadWarning = loadProfileLibrary();
+    renderProfiles();
+    if (profileLoadWarning) setMessage(profileLoadWarning, "error");
+  </script>
+</body>
+</html>
